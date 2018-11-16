@@ -1,0 +1,161 @@
+\documentclass[11pt,a4paper,twoside,openright]{report}
+
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{subfigure}
+\usepackage{afterpage}
+\usepackage{amsmath,amssymb}            
+\usepackage{rotating}  
+\usepackage{fancyhdr}  
+\usepackage{bbding}  
+\usepackage{framed}  
+\usepackage[scriptsize]{caption} 
+\usepackage{listings}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{bera}
+\usepackage{xcolor}
+
+\graphicspath{ {./images/} }
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{keywords}{RGB}{255,0,90}
+\definecolor{comments}{RGB}{0,0,113}
+\definecolor{red}{RGB}{160,0,0}
+\definecolor{green}{RGB}{0,150,0}
+\definecolor{eclipseStrings}{RGB}{42,0.0,255}
+\definecolor{eclipseKeywords}{RGB}{127,0,85}
+\colorlet{numb}{magenta!60!black}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    commentstyle=\color{eclipseStrings}, % style of comment
+    stringstyle=\color{eclipseKeywords}, % style of strings
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    string=[s]{"}{"},
+    comment=[l]{:\ "},
+    morecomment=[l]{:"},
+    literate=
+        *{0}{{{\color{numb}0}}}{1}
+         {1}{{{\color{numb}1}}}{1}
+         {2}{{{\color{numb}2}}}{1}
+         {3}{{{\color{numb}3}}}{1}
+         {4}{{{\color{numb}4}}}{1}
+         {5}{{{\color{numb}5}}}{1}
+         {6}{{{\color{numb}6}}}{1}
+         {7}{{{\color{numb}7}}}{1}
+         {8}{{{\color{numb}8}}}{1}
+         {9}{{{\color{numb}9}}}{1}
+}
+
+%\setlength{\paperwidth}{21cm}
+%\setlength{\paperheight}{29.7cm}
+%\setlength{\oddsidemargin} {2. cm}
+%\setlength{\evensidemargin} {2. cm}
+%\addtolength{\oddsidemargin} {-0.4 cm}
+%\addtolength{\evensidemargin} {-0.4 cm}
+\linespread{1.1}
+
+%\usepackage[italian]{babel}
+\usepackage[latin1]{inputenc}
+\renewcommand{\captionfont}{\normalfont \sffamily \itshape \small}
+
+\newcommand{\checklist}[1]{\vspace{1cm}\begin{framed}
+\noindent \textbf{Checklist} #1\end{framed}}
+
+\newcommand{\note}[2]{\begin{framed}\sffamily\small
+\noindent \textbf{#1} \\ #2\end{framed}}
+
+\pagestyle{empty}
+
+\begin{document}
+
+\include{cover_page}
+
+\thispagestyle{empty} \normalfont 
+
+\include{dedication}
+
+%\thispagestyle{empty}  \cleardoublepage
+%\pagenumbering{Roman}
+%\include{abstract}
+
+%\thispagestyle{empty} \vspace*{.75truecm} \cleardoublepage
+%\include{acknowledgements}
+
+%\thispagestyle{empty} \vspace*{.75truecm} \normalfont \cleardoublepage
+\pagestyle{plain}\renewcommand{\chaptermark}[1]{\markboth{\chaptername\ \thechapter.\ #1}{}} 
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}         
+\fancyhead[LE,RO]{\bfseries\thepage}    
+                                        
+\fancyhead[RE]{\bfseries\leftmark}    
+\fancyhead[LO]{\bfseries\rightmark}     
+\renewcommand{\headrulewidth}{0.3pt} 
+
+\tableofcontents
+\cleardoublepage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% % Use as many chapters as you need to structure your content
+\include{chapter1/chapter}
+\include{chapter2/chapter}
+\include{chapter3/chapter}
+\include{chapter4/chapter}
+%\include{chapter5/chapter}
+%\include{chapter6/chapter}
+\include{chapter7/chapter}
+%\include{chapter8/chapter}
+
+
+%\cleardoublepage
+% ---- Bibliography ----
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{plain}
+\bibliography{references}
+%\nocite{*}
+
+\appendix
+
+\pagestyle{fancy} 
+\fancyfoot{}                                               
+\renewcommand{\chaptermark}[1]{\markboth{\appendixname\ \thechapter.\ #1}{}} 
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}         
+\fancyhead[LE,RO]{\bfseries\thepage}    
+                                        
+\fancyhead[RE]{\bfseries\leftmark}    
+\fancyhead[LO]{\bfseries\rightmark}     
+\renewcommand{\headrulewidth}{0.3pt} 
+
+% % Use as many appendixes as you need
+%\include{appendixA/appendix}
+\include{appendixB/appendix}
+
+\end{document}
+
+
+
+
+
