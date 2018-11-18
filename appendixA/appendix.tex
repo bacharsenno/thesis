@@ -1,8 +1,9 @@
 % !TEX root = ../thesis.tex
-\chapter{User Manual}
+\chapter{Code}
 \label{appendiceA}
 \thispagestyle{empty}
-\begin{lstlisting}[language=python]
+The following code takes a JSON schema of a response received from web services, and generates the corresponding XML descriptor. The XML descriptor can then be interpreted by PerLa, and then used to communicate with this web service. The JSON schema is generated using one of the many publicly available schema generators, such as the one hosted on \hyperref[https://github.com/gonvaled/jskemator]{https://github.com/gonvaled/jskemator}\\
+\begin{lstlisting}[language=Python]
 
 import simplejson
 from pprint import pprint
