@@ -118,10 +118,9 @@ Moreover, we want to preserve the structure of the different objects when saving
 The following diagram shows the caching schema, including details on which kind of cache is used for each component.
 \begin{figure}[h]
 \centering
-\includegraphics[scale=0.6]{cachedetails}
+\includegraphics[width=\textwidth]{cachedetails}
 \caption{Caching Details}
 \end{figure}
-\newpage
 \newpage
 \subsubsection{How to cache a query?}
 As we mentioned earlier, a query is identified by the following characteristics:
@@ -207,7 +206,7 @@ Looking at the output, we notice that there is a degree of accuracy in terms of 
 As mentioned earlier, we are storing in an SQL database the content of the replies we are receiving from the various web services, after parsing them and matching the needed attributes with the resource schema objects. However, we are also saving information about the queries that led us to these results. An example of this is shown in the figure below:
 \begin{figure}[h]
 \centering
-\includegraphics[scale=0.6]{dbquery}
+\includegraphics[width=\textwidth]{dbquery}
 \caption{Resource Database Sample}
 \end{figure}
 \\
@@ -221,4 +220,48 @@ One last point worth mentioning in the following: we are aiming to develop CAMUS
 \end{itemize}
 \pagebreak
 \section{Evaluation}
-WiP
+The evaluation process on one hand aims to confirm that the developed components are able to perform the needed functionalities successfully without any errors. On the other hand, the software development process is iterative, and therefore, there is always room to optimize and improve the performance of the various parts that make up our framework.\\\\
+In this performance evaluation process, we focus on the parts that we worked the most on, namely the back-end system, and its communication with the middleware. We study different aspects in our system, such as its ability to include new web services given valid descriptors and the time it takes to retrieve and integrate data. Moreover, we focus on judging how advantageous introducing caching and storage mechanisms has been, as well as whether the theoretical design decision we made are supported by the results we get by doing experimental tests.
+\subsection{Adding New Services}
+Testing the flexibility of our algorithms, and the ability to add new services yielded satisfying results: our initial configuration included two main categories (restaurants and events). We also were integrating data from four different web services when searching for events, and from three when searching for restaurants. Adding a fourth web service to the restaurants API was easy and intuitive as we aimed for it to be: by generating and including the corresponding descriptor, the response received from this web service was integrated seamlessly with our previous ones.\\\\
+Adding a new category (news) proved to be simple as well: we used the same code we had for the previous categories with very minimal changes, defined the new endpoint, and provided descriptors for three web services that provide news headlines. The new endpoint returned the expected response: a list of news headlines that integrates data received from all three new web services.
+\subsection{Caching and Storage Evaluation}
+One of the main reasons we introduced caching and storage is to reduce the amount of time required to fetch data from web services and integrate the responses. This process proved to be very time consuming, and therefore we proposed this approach as a solution. In order to test the efficiency of our solution, we devised the following plan:
+\begin{itemize}
+\item Generate a test dataset made up of 1000 queries, issued from Milano. The queries follow a normal distribution in terms of location, having Milano Duomo as center, to keep the scenario as realistic as possible.
+\item The dataset includes entries for restaurants with various search queries (``sushi'', ``burger'', ``pizza'' etc...).
+\item Choose a caching policy, and then forward the queries to the backend. Log the total running time, the standard deviation, and the variance for each of the policies.
+\end{itemize}
+The following map visualizes the geographical distribution of the queries.
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{testmap}
+\caption{Geographical Query Distribution}
+\end{figure}
+\newpage
+Moreover, we ran the tests using four different caching policies:
+\begin{itemize}
+\item NO CACHE: This policy does not implement any kind of caching or storage. For every query, the middleware forwards the query to the backend through an endpoint, and the backend queries the corresponding web services and integrates their outputs.
+\item DB RESOURCE CACHE: Each time the backend integrates the responses received from web services, it stores the result in an SQL database, and it specifies the metadata that led to this result for each object (location and text of the corresponding query). For subsequent requests, the middleware tries to retrieve results from this same database, and only proceeds to forward requests to the backend in case the results retrieved from the database are deemed insufficient. 
+\item DB CACHE (RESOURCE + QUERIES): Same as DB RESOURCE CACHE, but the backend also stores information about the queries (category, location, text, and time). Instead of querying the resource tables (which will scale exponentially as the number of users and queries increases), it simply checks whether an equivalent query has been issued within a certain timeframe. In theory, since the number of rows in a queries table is much smaller than that of a resource table, this process should be much faster.
+\item DB CACHE (RESOURCE) + QUERIES CACHE (REDIS): Same as the previous case, but save the queries in a REDIS cache instead of an SQL database. The key-value pairs follow the same patterns defined in section 5.1.2.
+\end{itemize}
+The following table summarizes the results of the tests for each caching policy.
+\begin{table}[h]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\multicolumn{1}{|l|}{\diagbox{Caching Policy}{Value}} & Average & Standard Deviation & Variance & Hit Ratio \\ \hline
+NO CACHE & 2.4911 & 2.5054 & 6.2772 & N/A \\ \hline
+RESOURCE CACHE (SQL) & 0.3675 & 1.0087 & 1.0175 & 85.6\% \\ \hline
+\begin{tabular}[c]{@{}c@{}}RESOURCE CACHE (SQL)\\ +\\ QUERIES CACHE (SQL)\end{tabular} & 0.7833 & 1.430 & 1.3065 & 72.8\% \\ \hline
+\begin{tabular}[c]{@{}c@{}}RESOURCE CACHE (SQL)\\ +\\ QUERIES CACHE (REDIS)\end{tabular} & 0.4184 & 1.1545 & 1.333 & 83.6\% \\ \hline
+\end{tabular}%
+}
+\caption{Performance Evaluation Results}
+\end{table}
+\newpage
+\noindent Right away, we can see the advantage gained by introducing caching. The average time per query (measured over 1000 queries) went down from 2.5 seconds to around 0.5 seconds for any caching type. Moreover, in accordance with our theoretical estimations, using REDIS has proved to be more efficient than using SQL databases as a query cache: this is where the in-memory storage and the non-blocking operations come into play.\\\\
+One interesting observation is that caching the resources only in an SQL database has had better values compared to using both query and resource caching, even if minimally. However, this is probably because our resource cache started from an empty state, and therefore, towards the end of the test, it did not scale to the size that would match that of a real life scenario. The idea here is that the resource cache increases in size at a pace that is much higher than that of the query cache, since there are multiple resources associated with each query. Therefore, it becomes increasingly costly to go through the entirety of the resource cache and check whether it contains enough entries corresponding to the query and category we are looking for.\\\\
+To sum up, the results we obtained after running these tests were encouraging, and they confirmed that we are on the right track with our current design decisions and overall architecture.

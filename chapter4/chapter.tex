@@ -36,7 +36,7 @@ After choosing these seven APIs, we wrote the code needed to query each of them,
 \newpage
 \begin{figure}[h]
 \centering
-\includegraphics[scale=0.435]{genarch}
+\includegraphics[width=\textwidth]{genarch}
 \caption{High-Level Architecture View}
 \end{figure}
 \newpage
@@ -44,7 +44,7 @@ After choosing these seven APIs, we wrote the code needed to query each of them,
 The next step was to find a way to generalize the code we are coding so that it can be easily adapted to any additional APIs we decide to add later on. Therefore, we needed to create a generic wrapper that, when given certain information about the requests and responses associated with a specific API, is able to query this API, retrieve the response, parse it, and integrate it with those of other APIs. This process is illustrated below, once again taking restaurants APIs as example.\\
 \begin{figure}[h]
 \centering
-\includegraphics[scale=0.6]{wrapper}
+\includegraphics[width=\textwidth]{wrapper}
 \caption{Service Wrapper}
 \end{figure}
 \\
