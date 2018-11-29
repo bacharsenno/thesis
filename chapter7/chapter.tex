@@ -124,7 +124,6 @@ The following diagram shows the caching schema, including details on which kind 
 \includegraphics[width=\textwidth]{cachedetails}
 \caption{Caching Details}
 \end{figure}
-\newpage
 \subsubsection{Query Caching}
 As we mentioned earlier, a query is identified by the following characteristics:
 \begin{itemize}
@@ -133,11 +132,11 @@ As we mentioned earlier, a query is identified by the following characteristics:
   \item Query text, as in the user-provided content of the query.
   \item Timestamp of when the query was initially sent.
 \end{itemize}
-The first three characteristics allow us to identify whether two queries are, in a sense, ``identical''. Two queries are ``identical'' if they belong to the same category, have been issued from the same location (within a certain radius, and we take 2.4 kilometers as an example), and have the same text (or a close synonym). Conceptually, matching two queries is simple; programmatically however, we have to find a way to determine whether two location points are within a certain distance from one another on the fly, and whether two terms can be considered close synonyms.\\\\
+The first three characteristics allow us to identify whether two queries are, in a sense, ``identical''. Two queries are ``identical'' if they belong to the same category, have been issued from the same location (within a certain radius, and we take 2.4 kilometers as an example), and have the same text (or a close synonym). Thus, we have to find a way to determine whether two location points are within a certain distance from one another on the fly, and whether two terms can be considered close synonyms.\\\\
 For the first part of the key, e.g. the category, it is easy to distinguish whether two queries share the same category since this information is already provided by the middleware, and we simply have to include it as part of the key in the key-value pair.\\\\
-Concerning the location, one approach would be to match a query with an area rather than a specific point: if we could identify whether two queries were issued from the same area. Geohash can help us do exactly that with minimum effort.
-\subsubsection{What is Geohash?}
-Geohash\footnote{http://geohash.org/} is is a public domain geocoding system which encodes a geographic location -initially represented as a (latitude, longitude) pair- into a short string of letters and digits. The longer the encoded string is, the more accurately a location is encoded. The following table represents the radius of an area represented by a Geohash string, with respect to the length of this string:\\
+In what follows, we try to explain the adopted strategies for establishing location equivalence and query text equivalence.
+\subsubsection{Location Equivalence}
+Geohash\footnote{http://geohash.org/} is a public domain geocoding system which encodes a geographic location -initially represented as a (latitude, longitude) pair- into a short string of letters and digits. The longer the encoded string is, the more accurately a location is encoded. The following table represents the radius of an area represented by a Geohash string, with respect to the length of this string:\\
 \#  \hspace{5pt} km\\      
 1   $\pm$ 2500\\
 2   $\pm$ 630\\
@@ -151,15 +150,15 @@ Geohash\footnote{http://geohash.org/} is is a public domain geocoding system whi
 10  $\pm$ 0.00060\\
 11  $\pm$ 0.000074\\
 \\
-This means that if two Geohash strings start with the same character, then the two corresponding locations are at most 2500 kilometers away from one another. Applying the same idea to our case, and taking two query locations as an example, if the corresponding Geohash strings have the same 5-character prefix, then the distance between the two locations of queries is less than or equal to 2.4 KM. In other words, a 5-character prefix corresponds to a circle of diameter 4.8 kilometers, and all queries that share the same 5-character prefix belong in the same circle. This makes our task much easier, since we now have a reliable way to distinguish whether two queries match in terms of location, by performing simple calculations.\\\\
+This means that if two Geohash strings start with the same character, then the two corresponding locations are at most 2500 kilometers away from one another. Applying the same idea to our case, and taking two query locations as an example, if the corresponding Geohash strings have the same 5-character prefix, then the distance between the two locations of queries is less than or equal to 2.4 KM. In other words, a 5-character prefix corresponds to a circle of diameter 4.8 kilometers, and all queries that share the same 5-character prefix belong in the same circle. This makes our task much easier, since we now have a reliable way to distinguish whether two queries match in terms of location, by performing simple calculations.
+\subsubsection{Query Text Equivalence}
 So far, we have successfully encoded two of the three key characteristics as part of the Redis key, and the key is structured as follows:\\
 Category:::Geohash\\
 Example:\\
 Restaurants:::drt2z\\\\
 The next step would be to add the query text to the key. However, if we base our key checks on literal comparisons of various query texts, we would not be establishing a real equivalency relation. For instance, if a user performs a search for ``music'' events in an area, and another user shortly after that searches for ``band'', there will be many common elements in the results of these two operations. Similarly, if a user searches for ``Asian'' restaurants, and another searches for ``Chinese'' restaurants in the same location, many restaurants will exist in both result lists. Therefore, we should establish some semantic equivalency measure between these terms.
-\pagebreak
-\subsubsection{Query Text Equivalence}
 We want to be able to link two queries by comparing the text attached to them, from a semantic perspective, and decide whether they can be considered equivalent. There are multiple approaches that allow us to compare semantic resemblance between terms, and we will discuss in what follows.
+\newpage
 \begin{itemize}
 \item Word2vec\\
 Word2vec\footnote{https://code.google.com/archive/p/word2vec/} is a tool developed by a team of researchers at Google in 2013. This tool uses shallow, two-layer neural networks as models, and these models are trained over large data sets in an attempt to find semantic and linguistic relations between words. Word2vec produces a vector space that represents the data set, each words being a vector in this space. The distance between two vectors is proportional to the semantic similarity between the two words associated with these vectors.\\\\
@@ -183,12 +182,12 @@ print model.similarity("sushi", "japanese")
 print model.similarity("sushi", "music")
 print model.wv.most_similar(positive="sushi")
 \end{lstlisting}
-\pagebreak
 The output of this program is as follows:
 \begin{itemize}
 \item Similarity between ``first'' and ``second'': 0.8507271
 \item Similarity between ``sushi'' and ``japanese'': 0.2515804
 \item Similarity between ``sushi'' and ``music'': 0.07649763
+\newpage
 \item Ten most similar words to ``sushi'':
 \begin{itemize}
 \item sashimi
@@ -204,20 +203,20 @@ The output of this program is as follows:
 \end{itemize}
 \end{itemize}
 Looking at the output, we notice that there is a variable degree of accuracy in terms of semantic similarity; the similarity coefficient between ``first'' and ``second'' is 85\%, while it is 25\% for ``sushi'' and ``japanese'', and 7\% for ``sushi'' and ``music''. At first glance, the output might make sense. However, for our purposes, Word2vec might not always offer the kind of semantic analysis that we are going for. For instance, Word2vec gives a high similarity coefficient between ``sushi'' and ``burger'', since both of them are types of food. However, in our context, we want a very low similarity coefficient between these two terms. More investigation resulted in many more examples of cases where Word2vec alone actually leads us the wrong way. Therefore, even though it can provide valuable information in some contexts, we cannot solely rely on it, and had to look for other approaches.
-\pagebreak
+\newpage
 \item Database Query Text Associations\\
 As mentioned earlier, we are storing in a relational database the content of the replies we are receiving from the various web services, after parsing them and matching the needed attributes with the resource schema objects. However, we are also saving information about the queries that led us to these results. An example of this is shown in the figure below:
 \begin{figure}[h]
 \centering
 \includegraphics[width=\textwidth]{dbquery}
-\caption{Sample of Stored Data}
+\caption{Sample of Query Metadata}
 \end{figure}
 \\
 For each received object (restaurants, in this case), we save the source (web service) that sent it, as well as the location and the text of the query associated with it. For example, the first result in the table is a restaurant called ``Crudo'', and there are three different queries that returned this same restaurant as part of the result set: ``sushi'', ``asian'', and ``japanese''. The third restaurant ``Koy'' is associated with queries having ``sushi'', ``asian'', and ``korean'' as query text.\\\\
 The interesting point here is that since some query texts return the same restaurant, then there is a chance that the associated terms have some kind of correlation among them. This correlation might be a way to define the semantic similarity we are looking for. Therefore, once the number of users scales enough and we have more data, we might be able to mine for valid semantic associations between various terms.
 \pagebreak
 \item Manual Ontology Definition\\
-The third approach to determine whether two queries are equivalent is by relying on static rules that are defined and saved in the system. The system administrator, along with someone who is experienced in the relevant domain, can define these rules and save them. While this might seem unfeasible due to the number of variations a word can have, we only need to save the root of the words manually, and link them with other semantically related roots.\\\\
+The third approach to determine whether two queries are equivalent is by relying on static rules that are defined and saved in the form of domain ontology. The system administrator, along with someone who is experienced in the relevant domain, can define these rules and save them. While this might seem unfeasible due to the number of variations a word can have, we only need to save the root of the words manually, and link them with other semantically related roots.\\\\
 For example, in the case of restaurants, the administrator would define through rules that ``asian'', ``japanese'', and ``sushi'' are linked. Likewise, there would be another rule linking ``pizza'', ``pasta'', and ``italian''. After doing this, we can generate programmatically some variations of these words using string manipulation and regular expressions. In other words, terms like ``japan'', ``japanese food'', and ``sushi bar'' are generated automatically once the corresponding roots have been added to our semantic dictionary.\\\\
 One last point worth mentioning is the following: we are aiming to develop CAMUS as a framework that can be adopted and implemented in as many fields as possible. The tourism scenario we have been using is just an example. The system however is being developed in a generic way that allows it to be beneficial in other domains as well. However, some of these domains might be much more sensitive and critical than tourism; some examples of that would be anything related to medicine or security. In those cases, any kind of association rules would anyway need to be looked over by a specialist from the field, and this even applies to structuring the corresponding CDT and resource schema. Therefore, the idea of manually setting up some rules, even if it is just the most basic and important ones, now becomes even more appropriate.
 \end{itemize}
