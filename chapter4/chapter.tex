@@ -54,7 +54,7 @@ Therefore, we needed to create a generic wrapper that is able to receive a reque
 \noindent In order to implement this functionality, we defined the structure of the objects we are querying for (i.e. restaurants and events), specified the fields that interest us, and defined the corresponding classes along with their constructors. The aim here is to extract the information we need from various APIs, and then use the constructors of these classes in order to create a homogenous array of objects that contains this information.
 \subsection{Service Descriptors}
 Sticking with the idea that we want our code to be generic and devoid of any service-specific details, we decided to include such details in external JSON files (descriptors). When needed, these files will be parsed in order to identify how to query said services, and what parameters to include in the requests.\\\\
-The following figure shows a skeleton of a JSON service descriptor. The role of each object included in a JSON descriptor will be explained later on, but the point behind these descriptors is to supply the wrapper with knowlege on how to query the services, what parameters they expect, and how to parse their responses.
+The following figure shows a skeleton of a JSON service descriptor. The role of each object included in a JSON descriptor will be explained later on, but the point behind these descriptors is to supply the wrapper with knowledge on how to query the services, what parameters they expect, and how to parse their responses.
 \newpage
 \begin{figure}[h]
 \centering
